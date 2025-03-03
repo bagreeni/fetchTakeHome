@@ -27,11 +27,6 @@ class MainActivity : ComponentActivity() {
         val homeScreenViewModel: HomeScreenViewModel by viewModels()
 
         setContent {
-
-            LaunchedEffect("fetchingInitialData") {
-                homeScreenViewModel.getData()
-            }
-
             FetchRewardsTakeHomeTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     //Top bar spacer
@@ -42,21 +37,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    FetchRewardsTakeHomeTheme {
-        Greeting("Android")
     }
 }

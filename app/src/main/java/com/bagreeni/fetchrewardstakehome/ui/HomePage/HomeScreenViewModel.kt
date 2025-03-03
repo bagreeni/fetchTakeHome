@@ -1,31 +1,36 @@
 package com.bagreeni.fetchrewardstakehome.ui.HomePage
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.bagreeni.fetchrewardstakehome.backend.FetchApiService
 import com.bagreeni.fetchrewardstakehome.backend.FetchItem
 import com.bagreeni.fetchrewardstakehome.backend.HiringResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(private val fetchApi: FetchApiService) : ViewModel() {
+    private val triggerFlow: MutableSharedFlow<Unit> = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply {
+        tryEmit(Unit)
+    }
+    val homeUiState: StateFlow<HomeUiState> = triggerFlow.map{ getData() }.stateIn(viewModelScope, SharingStarted.Lazily, HomeUiState.Loading)
 
-    private val _homeUiState: MutableStateFlow<HomeUiState> = MutableStateFlow(HomeUiState.Loading)
-    val homeUiState: StateFlow<HomeUiState> = _homeUiState
-
-    suspend fun getData() {
-        _homeUiState.value = HomeUiState.Loading
-        when (val response = fetchApi.getInfo()) {
+    suspend fun getData() : HomeUiState {
+        return when (val response = fetchApi.getInfo()) {
             is HiringResponse.Success -> {
-                _homeUiState.value = HomeUiState.Content(
+                  HomeUiState.Content(
                     list = hiringListToSortedUiDataNumerical(response.hiringList)
                 )
             }
 
             else -> {
-                _homeUiState.value = HomeUiState.Error
+                HomeUiState.Error
             }
         }
     }
